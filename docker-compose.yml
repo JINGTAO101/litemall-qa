@@ -1,0 +1,22 @@
+services:
+  mysql:
+    image: mysql:8.4
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: litemall123456
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_general_ci
+    volumes:
+      - ./docker/init-sql:/docker-entrypoint-initdb.d
+
+  litemall:
+    build: ./docker/litemall
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_DRUID_URL: jdbc:mysql://mysql:3306/litemall?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    depends_on:
+      - mysql
