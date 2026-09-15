@@ -10,6 +10,12 @@ services:
       - --collation-server=utf8mb4_general_ci
     volumes:
       - ./docker/init-sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-plitemall123456"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 90s
 
   litemall:
     build: ./docker/litemall
@@ -19,4 +25,5 @@ services:
       SERVER_PORT: 8080
       SPRING_DATASOURCE_DRUID_URL: jdbc:mysql://mysql:3306/litemall?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy

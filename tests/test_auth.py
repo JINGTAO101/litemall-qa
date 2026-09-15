@@ -4,6 +4,7 @@ from common.db import query_one
 import base64
 import json
 
+
 def test_login_success():
     cfg = load_config()
     r = request(
@@ -80,7 +81,7 @@ def test_login_missing_username():
     assert body["errno"] == 401
     assert body.get("data") is None
 
-    
+
 
 def test_login_user_id_matches_db():
     cfg = load_config()

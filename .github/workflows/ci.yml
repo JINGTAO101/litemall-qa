@@ -1,0 +1,51 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Start stack
+        run: docker compose up -d --build
+
+      - name: Wait for wx-api
+        run: |
+          for i in $(seq 1 90); do
+            if curl -fsS --noproxy '*' http://127.0.0.1:8080/wx/index/index | grep -q '"errno":0'; then
+              echo "litemall ready"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "=== litemall logs ==="
+          docker compose logs litemall
+          echo "=== mysql logs ==="
+          docker compose logs mysql
+          exit 1
+
+      - name: Pytest
+        run: pytest tests -v --alluredir=allure-results
+
+      - name: Stop stack
+        if: always()
+        run: docker compose down
+
+      - name: Upload allure-results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results
