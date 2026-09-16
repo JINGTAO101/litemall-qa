@@ -84,6 +84,7 @@ litemall-qa/
   tests/                      鉴权、购物车、订单
   common/                     HTTP 客户端、配置、数据库查询
   config/local.yaml           base_url 与库连接
+  pytest.ini                  pythonpath=. ，保证能 import common
   docker/                     官方 SQL 与 wx-api Dockerfile
   docker-compose.yml          MySQL + litemall（含 MySQL healthcheck）
   .github/workflows/ci.yml    GitHub Actions
