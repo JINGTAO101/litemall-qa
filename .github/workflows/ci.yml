@@ -37,7 +37,7 @@ jobs:
           exit 1
 
       - name: Pytest
-        run: pytest tests -v --alluredir=allure-results
+        run: python -m pytest tests -v --alluredir=allure-results
 
       - name: Stop stack
         if: always()
