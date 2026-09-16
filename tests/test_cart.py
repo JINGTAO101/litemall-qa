@@ -1,8 +1,10 @@
+"""购物车：加购、查询、同 SKU 累加、删除；官方演示商品 1181000。"""
 from common.http_client import request
 from common.db import query_one
 from common.config import load_config
 
 def test_cart_add_success(token, clear_cart):
+    """加购成功：errno=0，data 为购物车商品件数（正整数）。"""
     r = request(
         "POST",
         "/wx/cart/add",
@@ -17,6 +19,7 @@ def test_cart_add_success(token, clear_cart):
 
 
 def test_cart_index_after_add(token, clear_cart):
+    """加购后 index 能看到该 SKU，数量至少为 1。"""
     r_add = request(
         "POST",
         "/wx/cart/add",
@@ -42,12 +45,14 @@ def test_cart_index_after_add(token, clear_cart):
     assert found["number"] >= 1
 
 def test_cart_index_without_token():
+    """未登录查车：errno=501。"""
     r = request("GET", "/wx/cart/index")
     body = r.json()
     assert r.status_code == 200
     assert body["errno"] == 501
 
 def test_cart_index_invalid_token():
+    """无效 Token 查车：errno=501。"""
     r = request(
         "GET",
         "/wx/cart/index",
@@ -58,6 +63,7 @@ def test_cart_index_invalid_token():
     assert body["errno"] == 501
 
 def test_cart_add_number_zero(token, clear_cart):
+    """件数 0：参数不对，业务码 401。"""
     r = request(
         "POST",
         "/wx/cart/add",
@@ -69,6 +75,7 @@ def test_cart_add_number_zero(token, clear_cart):
     assert body["errno"] == 401
 
 def test_cart_add_out_of_stock(token, clear_cart):
+    """productId=6 官方库存为 0，加购 errno=711。"""
     r = request(
         "POST",
         "/wx/cart/add",
@@ -81,6 +88,7 @@ def test_cart_add_out_of_stock(token, clear_cart):
 
 
 def test_cart_add_same_sku_accumulates(token, clear_cart):
+    """同一 SKU 再加购：行 id 不变，number +1。"""
     headers = {"X-Litemall-Token": token}
     payload = {"goodsId": 1181000, "productId": 1, "number": 1}
     r1 = request("POST", "/wx/cart/add", json=payload, headers=headers)
@@ -109,6 +117,7 @@ def test_cart_add_same_sku_accumulates(token, clear_cart):
     assert found2["number"] == number_before + 1
 
 def test_cart_delete_sku(token, clear_cart):
+    """删除传 productIds（SKU id），不是购物车行 id；删除后 index 不再出现。"""
     headers = {"X-Litemall-Token": token}
     r_add = request(
         "POST",
@@ -136,6 +145,7 @@ def test_cart_delete_sku(token, clear_cart):
     assert found is None
 
 def test_cart_add_matches_db(token, clear_cart):
+    """加购后 litemall_cart 有未删除行，goods_id/number 与请求一致。"""
     headers = {"X-Litemall-Token": token}
     r = request(
         "POST",

@@ -1,8 +1,10 @@
+"""订单：无 Token 拒绝；下单后对账三表与库存，再取消恢复库存。"""
 from common.http_client import request
 from common.db import query_one
 
 
 def test_order_submit_without_token():
+    """未登录下单：errno=501。cartId=0 表示提交当前用户已勾选购物车。"""
     r = request(
         "POST",
         "/wx/order/submit",
@@ -21,6 +23,7 @@ def test_order_submit_without_token():
 
 
 def test_order_submit_success(token, clear_cart):
+    """有 Token 下单成功：写 order / order_goods、扣库存；取消后 status=102 且库存加回（行不物理删除）。"""
     headers = {"X-Litemall-Token": token}
     listed = request("GET", "/wx/address/list", headers=headers).json()
     assert listed["errno"] == 0
@@ -107,6 +110,7 @@ def test_order_submit_success(token, clear_cart):
         "SELECT order_status, deleted FROM litemall_order WHERE id=%s",
         (order_id,),
     )
+    # 102=已取消；deleted 仍为 0，明细行还在
     assert cancelled["deleted"] == 0
     assert cancelled["order_status"] == 102
     goods_after = query_one(
